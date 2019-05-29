@@ -394,6 +394,101 @@ namespace HttpCache.Controllers {
         }
 
         /// <summary>
+        /// Update expiration for existing entry.
+        /// </summary>
+        [HttpPut]
+        public ActionResult Update() {
+            // Get and verify owner.
+            var owner = this.Request.Headers.Keys.Contains("x-httpcache-owner")
+                ? this.Request.Headers["x-httpcache-owner"].ToString()
+                : null;
+
+            if (string.IsNullOrWhiteSpace(owner)) {
+                return this.BadRequest(new {
+                    message = "Header 'x-httpcache-owner' is required."
+                });
+            }
+
+            // Get and verify key.
+            var key = this.Request.Headers.Keys.Contains("x-httpcache-key")
+                ? this.Request.Headers["x-httpcache-key"].ToString()
+                : null;
+
+            if (string.IsNullOrWhiteSpace(key)) {
+                return this.BadRequest(new {
+                    message = "Header 'x-httpcache-key' is required."
+                });
+            }
+
+            // Check for data.
+            if (Program.Storage == null) {
+                return this.NotFound(new {
+                    message = "No storage container defined yet."
+                });
+            }
+
+            if (!Program.Storage.ContainsKey(owner)) {
+                return this.NotFound(new {
+                    message = "Owner not found."
+                });
+            }
+
+            if (!Program.Storage[owner].ContainsKey(key)) {
+                return this.NotFound(new {
+                    message = "Key not found."
+                });
+            }
+
+            // Found data.
+            var entry = Program.Storage[owner][key];
+
+            if (entry.HasExpired) {
+                return this.NotFound(new {
+                    message = "Data has expired."
+                });
+            }
+
+            // Get expiry length.
+            int? expiryLength = null;
+
+            if (this.Request.Headers.Keys.Contains("x-httpcache-expiry-length")) {
+                if (int.TryParse(this.Request.Headers["x-httpcache-expiry-length"].ToString(), out var tempEL)) {
+                    expiryLength = tempEL;
+                }
+                else {
+                    return this.BadRequest(new {
+                        message = "Header 'x-httpcache-expiry-length' is the number of seconds to keep data."
+                    });
+                }
+            }
+
+            entry.Updated = DateTimeOffset.Now;
+            entry.ExpiryLength = expiryLength;
+
+            if (expiryLength.HasValue) {
+                entry.Expires = DateTimeOffset.Now.AddSeconds(expiryLength.Value);
+            }
+
+            if (expiryLength.HasValue &&
+                expiryLength.Value == -1) {
+
+                entry.ExpiryLength = null;
+                entry.Expires = null;
+            }
+
+            return this.Ok(new {
+                entry.Created,
+                entry.Updated,
+                entry.LastRead,
+                entry.Expires,
+                entry.ExpiryLength,
+                entry.SlidingExpiration,
+                entry.Size,
+                entry.ContentType
+            });
+        }
+
+        /// <summary>
         /// Delete data from the cache storage.
         /// </summary>
         [HttpDelete]
