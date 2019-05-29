@@ -464,6 +464,20 @@ namespace HttpCache.Controllers {
                 }
             }
 
+            // Get sliding expiration.
+            bool? slidingExpiration = null;
+
+            if (this.Request.Headers.Keys.Contains("x-httpcache-sliding-expiration")) {
+                if (bool.TryParse(this.Request.Headers["x-httpcache-sliding-expiration"].ToString(), out var tempSE)) {
+                    slidingExpiration = tempSE;
+                }
+                else {
+                    return this.BadRequest(new {
+                        message = "Header 'x-httpcache-sliding-expiration' is a boolean value."
+                    });
+                }
+            }
+
             entry.Updated = DateTimeOffset.Now;
             entry.ExpiryLength = expiryLength;
 
@@ -476,6 +490,10 @@ namespace HttpCache.Controllers {
 
                 entry.ExpiryLength = null;
                 entry.Expires = null;
+            }
+
+            if (slidingExpiration.HasValue) {
+                entry.SlidingExpiration = slidingExpiration.Value;
             }
 
             return this.Ok(new {
