@@ -109,6 +109,63 @@ namespace HttpCache.Controllers {
         }
 
         /// <summary>
+        /// Check if data exists in the cache storage.
+        /// </summary>
+        [HttpHead]
+        public ActionResult Exists() {
+            // Get and verify owner.
+            var owner = this.Request.Headers.Keys.Contains("x-httpcache-owner")
+                ? this.Request.Headers["x-httpcache-owner"].ToString().ToLower()
+                : null;
+
+            if (string.IsNullOrWhiteSpace(owner)) {
+                return this.BadRequest();
+            }
+
+            // Check for data.
+            if (Program.Storage == null) {
+                return this.NotFound();
+            }
+
+            if (!Program.Storage.ContainsKey(owner)) {
+                return this.NotFound();
+            }
+
+            // Get and verify key.
+            var key = this.Request.Headers.Keys.Contains("x-httpcache-key")
+                ? this.Request.Headers["x-httpcache-key"].ToString().ToLower()
+                : null;
+
+            if (string.IsNullOrWhiteSpace(key)) {
+                return this.BadRequest();
+            }
+
+            if (!Program.Storage[owner].ContainsKey(key)) {
+                return this.NotFound();
+            }
+
+            // Found data.
+            var entry = Program.Storage[owner][key];
+
+            if (entry.HasExpired) {
+                return this.NotFound();
+            }
+
+            // Update last-read.
+            entry.LastRead = DateTimeOffset.Now;
+
+            // Update expiration if sliding is enabled.
+            if (entry.SlidingExpiration &&
+                entry.ExpiryLength.HasValue) {
+
+                entry.Expires = DateTimeOffset.Now.AddSeconds(entry.ExpiryLength.Value);
+            }
+
+            // Output data.
+            return this.Ok();
+        }
+
+        /// <summary>
         /// Save data to the cache storage.
         /// </summary>
         [HttpPost]
