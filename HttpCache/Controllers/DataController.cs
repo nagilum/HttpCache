@@ -153,16 +153,6 @@ namespace HttpCache.Controllers {
                 return this.NotFound();
             }
 
-            // Update last-read.
-            entry.LastRead = DateTimeOffset.Now;
-
-            // Update expiration if sliding is enabled.
-            if (entry.SlidingExpiration &&
-                entry.ExpiryLength.HasValue) {
-
-                entry.Expires = DateTimeOffset.Now.AddSeconds(entry.ExpiryLength.Value);
-            }
-
             // Output data.
             return this.Ok();
         }
