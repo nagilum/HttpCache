@@ -1,4 +1,4 @@
-.vs/
-HttpCache/bin/
-HttpCache/obj/
-HttpCache/HttpCache.csproj.user
+src/.vs/
+src/HttpCache/bin/
+src/HttpCache/obj/
+src/HttpCache/HttpCache.csproj.user
