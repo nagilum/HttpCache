@@ -47,17 +47,19 @@ namespace HttpCache.Controllers {
                     .ToList();
 
                 return this.Ok(
-                    list.Select(n => new {
-                        n.Created,
-                        n.Updated,
-                        n.LastRead,
-                        n.Expires,
-                        n.ExpiryLength,
-                        n.SlidingExpiration,
-                        n.Size,
-                        n.Key,
-                        n.ContentType
-                    }));
+                    list
+                        .Where(n => !n.HasExpired)
+                        .Select(n => new {
+                            n.Created,
+                            n.Updated,
+                            n.LastRead,
+                            n.Expires,
+                            n.ExpiryLength,
+                            n.SlidingExpiration,
+                            n.Size,
+                            n.Key,
+                            n.ContentType
+                        }));
             }
 
             // Get and verify key.
