@@ -79,8 +79,8 @@ If you just want the actual data back, you can include the `x-httpcache-return-o
 In the case of the example data above, the output would then look like this:
 ```json
 {
-	"id": 123,
-	"name": "Test Product"
+    "id": 123,
+    "name": "Test Product"
 }
 ```
 
