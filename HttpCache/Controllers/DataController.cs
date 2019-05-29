@@ -351,6 +351,13 @@ namespace HttpCache.Controllers {
                 entry.Expires = DateTimeOffset.Now.AddSeconds(expiryLength.Value);
             }
 
+            if (expiryLength.HasValue &&
+                expiryLength.Value == -1) {
+
+                entry.ExpiryLength = null;
+                entry.Expires = null;
+            }
+
             if (slidingExpiration.HasValue) {
                 entry.SlidingExpiration = slidingExpiration.Value;
             }
