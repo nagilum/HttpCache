@@ -506,17 +506,6 @@ namespace HttpCache.Controllers {
                 });
             }
 
-            // Get and verify key.
-            var key = this.Request.Headers.Keys.Contains("x-httpcache-key")
-                ? this.Request.Headers["x-httpcache-key"].ToString().ToLower()
-                : null;
-
-            if (string.IsNullOrWhiteSpace(key)) {
-                return this.BadRequest(new {
-                    message = "Header 'x-httpcache-key' is required."
-                });
-            }
-
             // Check for data.
             if (Program.Storage == null) {
                 return this.NotFound(new {
@@ -530,25 +519,41 @@ namespace HttpCache.Controllers {
                 });
             }
 
-            string message;
+            var keysDeleted = new List<string>();
+
+            // Delete owner?
+            if (!this.Request.Headers.Keys.Contains("x-httpcache-key")) {
+                keysDeleted = Program.Storage[owner].Keys.ToList();
+                Program.Storage.Remove(owner);
+
+                return this.Ok(new {
+                    keysDeleted
+                });
+            }
+
+            // Get and verify key.
+            var key = this.Request.Headers.Keys.Contains("x-httpcache-key")
+                ? this.Request.Headers["x-httpcache-key"].ToString().ToLower()
+                : null;
+            
+            if (string.IsNullOrWhiteSpace(key)) {
+                return this.BadRequest(new {
+                    message = "Header 'x-httpcache-key' is required."
+                });
+            }
 
             // Are we looking for 1 item or several?
             if (this.Request.Headers.Keys.Contains("x-httpcache-key-is-prefix")) {
                 var keys = Program.Storage[owner].Keys.ToList();
-                var count = 0;
 
                 foreach (var ownerKey in keys) {
                     if (!ownerKey.StartsWith(key)) {
                         continue;
                     }
 
-                    Program.Storage[ownerKey].Remove(ownerKey);
-                    count++;
+                    keysDeleted.Add(ownerKey);
+                    Program.Storage[owner].Remove(ownerKey);
                 }
-
-                message = string.Format(
-                    "{0} entries removed.",
-                    count);
             }
             else {
                 if (!Program.Storage[owner].ContainsKey(key)) {
@@ -557,9 +562,8 @@ namespace HttpCache.Controllers {
                     });
                 }
 
+                keysDeleted.Add(key);
                 Program.Storage[owner].Remove(key);
-
-                message = "Entry removed.";
             }
 
             // Cleanup
@@ -569,7 +573,7 @@ namespace HttpCache.Controllers {
 
             // Report back.
             return this.Ok(new {
-                message
+                keysDeleted
             });
         }
     }
