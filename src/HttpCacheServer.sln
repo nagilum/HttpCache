@@ -3,7 +3,7 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 16
 VisualStudioVersion = 16.0.28922.388
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "HttpCache", "HttpCache\HttpCache.csproj", "{6A6B38D8-CA50-4CE5-BEBD-A6D334A09CB9}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "HttpCacheServer", "HttpCacheServer\HttpCacheServer.csproj", "{6A6B38D8-CA50-4CE5-BEBD-A6D334A09CB9}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
