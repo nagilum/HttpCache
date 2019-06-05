@@ -1,4 +1,4 @@
-﻿using System.Collections.Generic;
+﻿using System.Collections.Concurrent;
 using Microsoft.AspNetCore;
 using Microsoft.AspNetCore.Hosting;
 
@@ -7,7 +7,7 @@ namespace HttpCache {
         /// <summary>
         /// Storage container for owner => kvs.
         /// </summary>
-        public static Dictionary<string, Dictionary<string, CacheEntry>> Storage { get; set; }
+        public static ConcurrentDictionary<string, ConcurrentDictionary<string, CacheEntry>> Storage { get; set; }
 
         /// <summary>
         /// Init all the things..

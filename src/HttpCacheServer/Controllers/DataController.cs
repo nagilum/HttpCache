@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -321,11 +322,13 @@ namespace HttpCache.Controllers {
 
             // Prepare storage.
             if (Program.Storage == null) { 
-                Program.Storage = new Dictionary<string, Dictionary<string, CacheEntry>>();
+                Program.Storage = new ConcurrentDictionary<string, ConcurrentDictionary<string, CacheEntry>>();
             }
 
             if (!Program.Storage.ContainsKey(owner.ToLower())) {
-                Program.Storage.Add(owner.ToLower(), new Dictionary<string, CacheEntry>());
+                Program.Storage.TryAdd(
+                    owner.ToLower(),
+                    new ConcurrentDictionary<string, CacheEntry>());
             }
 
             // Get/create entry.
@@ -367,7 +370,7 @@ namespace HttpCache.Controllers {
                 });
             }
 
-            Program.Storage[owner.ToLower()].Add(key.ToLower(), entry);
+            Program.Storage[owner.ToLower()].TryAdd(key.ToLower(), entry);
 
             entry.Owner = owner;
             entry.Key = key;
@@ -532,7 +535,7 @@ namespace HttpCache.Controllers {
             // Delete owner?
             if (!this.Request.Headers.Keys.Contains("x-httpcache-key")) {
                 keysDeleted = Program.Storage[owner].Keys.ToList();
-                Program.Storage.Remove(owner);
+                Program.Storage.TryRemove(owner, out var _);
 
                 return this.Ok(new {
                     keysDeleted
@@ -560,7 +563,7 @@ namespace HttpCache.Controllers {
                     }
 
                     keysDeleted.Add(ownerKey);
-                    Program.Storage[owner].Remove(ownerKey);
+                    Program.Storage[owner].TryRemove(ownerKey, out var _);
                 }
             }
             else {
@@ -571,12 +574,12 @@ namespace HttpCache.Controllers {
                 }
 
                 keysDeleted.Add(key);
-                Program.Storage[owner].Remove(key);
+                Program.Storage[owner].TryRemove(key, out var _);
             }
 
             // Cleanup
             if (Program.Storage[owner].Count == 0) {
-                Program.Storage.Remove(owner);
+                Program.Storage.TryRemove(owner, out var _);
             }
 
             // Report back.
